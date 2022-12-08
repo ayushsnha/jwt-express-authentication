@@ -9,7 +9,7 @@ const signup = async (req, res, next) => {
     try {
         existingUser = await User.findOne({ email: email })
     } catch (err) {
-        console.log(err)
+        return new Error(err)
     }
 
     if (existingUser) {
@@ -28,8 +28,34 @@ const signup = async (req, res, next) => {
         await user.save();
         return res.status(201).json({ message: user })
     } catch (err) {
-        res.status(400).json(err);
+        return res.status(400).json(err);
     }
 }
 
-exports.signup = signup
+const login = async (req, res, next) => {
+    const { email, password } = req.body;
+    let existingUser;
+
+    try {
+        existingUser = await User.findOne({ email: email })
+    } catch (err) {
+        return new Error(err)
+    }
+
+    console.log(existingUser)
+
+    if (!existingUser) {
+        return res.status(400).json({ message: 'User Not Found !!' })
+    }
+
+    const isCorrectPassword = bcrypt.compareSync(password, existingUser.password);
+
+    if (!isCorrectPassword) {
+        return res.status(400).json({ message: 'Invalid Email / Password' });
+    }
+
+    return res.status(200).json({ message: 'Successfully Logged In' })
+}
+
+exports.signup = signup;
+exports.login = login;
