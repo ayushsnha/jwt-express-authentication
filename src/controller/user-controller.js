@@ -1,6 +1,9 @@
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
 
 const User = require('../model/User');
+
+const JWT_SECRET_KEY = 'someKey';
 
 const signup = async (req, res, next) => {
     const { name, email, password } = req.body
@@ -42,8 +45,6 @@ const login = async (req, res, next) => {
         return new Error(err)
     }
 
-    console.log(existingUser)
-
     if (!existingUser) {
         return res.status(400).json({ message: 'User Not Found !!' })
     }
@@ -54,7 +55,11 @@ const login = async (req, res, next) => {
         return res.status(400).json({ message: 'Invalid Email / Password' });
     }
 
-    return res.status(200).json({ message: 'Successfully Logged In' })
+    const token = jwt.sign({ id: existingUser._id }, JWT_SECRET_KEY, {
+        expiresIn: "1h"
+    })
+
+    return res.status(200).json({ message: 'Successfully Logged In', user: existingUser, token: token })
 }
 
 exports.signup = signup;
