@@ -1,9 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose')
+const cookieParser = require('cookie-parser');
 
 const router = require('./src/routes/user-routes')
 
 const app = express();
+app.use(cookieParser())
 mongoose.set('strictQuery', false);
 app.use(express.json());
 

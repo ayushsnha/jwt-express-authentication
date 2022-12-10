@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 const User = require('../model/User');
 
@@ -59,12 +59,22 @@ const login = async (req, res, next) => {
         expiresIn: "1h"
     })
 
+    res.cookie(String(existingUser._id), token, {
+        path: '/',
+        expires: new Date(Date.now() + 1000 * 60 * 60),
+        httpOnly: true,
+        sameSite: 'lax'
+    })
+
     return res.status(200).json({ message: 'Successfully Logged In', user: existingUser, token: token })
 }
 
 const verifyToken = (req, res, next) => {
-    const headers = req.headers['authorization'];
-    const token = headers.split(' ')[1];
+    const cookie = req.headers?.cookie || null;
+    if (!cookie) {
+        return res.status(400).json({ message: 'Session Expired!!' })
+    }
+    const token = cookie.split('=')[1];
     if (!token) {
         return res.status(404).json({ message: 'No Token Found' })
     }
