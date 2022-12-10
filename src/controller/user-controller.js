@@ -56,12 +56,16 @@ const login = async (req, res, next) => {
     }
 
     const token = jwt.sign({ id: existingUser._id }, JWT_SECRET_KEY, {
-        expiresIn: "1h"
+        expiresIn: "30s"
     })
+
+    if (req.cookies[`${existingUser._id}`]) {
+        req.cookies[`${existingUser._id}`] = ''
+    }
 
     res.cookie(String(existingUser._id), token, {
         path: '/',
-        expires: new Date(Date.now() + 1000 * 60 * 60),
+        expires: new Date(Date.now() + 1000 * 30),
         httpOnly: true,
         sameSite: 'lax'
     })
@@ -105,7 +109,39 @@ const getUser = async (req, res, next) => {
 
 };
 
+const refreshToken = (req, res, next) => {
+    const cookie = req.headers?.cookie || null;
+    const prevToken = cookie.split('=')[1];
+    if (!prevToken) {
+        return res.status(400).json({ message: 'Unauthorized' })
+    }
+    jwt.verify(String(prevToken), JWT_SECRET_KEY, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Authentication Failed' })
+        }
+        res.clearCookie(`${user.id}`);
+        req.cookies[`${user.id}`] = '';
+
+        const token = jwt.sign({ id: user.id }, JWT_SECRET_KEY, {
+            expiresIn: '30s'
+        });
+
+        res.cookie(String(user._id), token, {
+            path: '/',
+            expires: new Date(Date.now() + 1000 * 30),
+            httpOnly: true,
+            sameSite: 'lax'
+        })
+
+        req.id = user.id;
+        next();
+
+    })
+
+}
+
 exports.signup = signup;
 exports.login = login;
 exports.verifyToken = verifyToken;
 exports.getUser = getUser;
+exports.refreshToken = refreshToken;
