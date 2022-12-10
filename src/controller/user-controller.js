@@ -56,7 +56,7 @@ const login = async (req, res, next) => {
     }
 
     const token = jwt.sign({ id: existingUser._id }, JWT_SECRET_KEY, {
-        expiresIn: "30s"
+        expiresIn: "24h"
     })
 
     if (req.cookies[`${existingUser._id}`]) {
@@ -65,7 +65,7 @@ const login = async (req, res, next) => {
 
     res.cookie(String(existingUser._id), token, {
         path: '/',
-        expires: new Date(Date.now() + 1000 * 30),
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
         httpOnly: true,
         sameSite: 'lax'
     })
@@ -123,12 +123,12 @@ const refreshToken = (req, res, next) => {
         req.cookies[`${user.id}`] = '';
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET_KEY, {
-            expiresIn: '30s'
+            expiresIn: '24h'
         });
 
         res.cookie(String(user._id), token, {
             path: '/',
-            expires: new Date(Date.now() + 1000 * 30),
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
             httpOnly: true,
             sameSite: 'lax'
         })
